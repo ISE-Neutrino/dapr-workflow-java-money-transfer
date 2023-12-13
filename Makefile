@@ -23,37 +23,17 @@ build: ## 🧹 Build application
 	@echo -e "\e[34m$@\e[0m" || true
 	@mvn install
 
-build-examples: ## 🧹 Build examples folder
-	@echo -e "\e[34m$@\e[0m" || true
-	@cd examples && mvn clean install -Dcheckstyle.skip
-
 clean: ## 🧹 Clean compilation files
 	@echo -e "\e[34m$@\e[0m" || true
 	@mvn clean
 
-start-chain-worker: ## Start chain workflow worker
-	@echo -e "\e[34m$@\e[0m" || true
-	@cd examples && dapr run --app-id demoworkflowworker --resources-path ./components/workflows --dapr-grpc-port 50001 -- java -jar target/dapr-java-sdk-examples-exec.jar io.dapr.examples.workflows.chain.DemoChainWorker
-
-start-chain-client: ## Start chain workflow client
-	@echo -e "\e[34m$@\e[0m" || true
-	@cd examples && java -jar target/dapr-java-sdk-examples-exec.jar io.dapr.examples.workflows.chain.DemoChainClient
-
-
-start-money-worker: ## Start money transfer workflow worker
-	@echo -e "\e[34m$@\e[0m" || true
-	@cd examples && dapr run --app-id demoworkflowworker --resources-path ./components/workflows --dapr-grpc-port 50001 -- java -jar target/dapr-java-sdk-examples-exec.jar io.dapr.examples.workflows.moneytransfer.MoneyTransferWorker
-
-start-money-client: ## Start money transfer workflow client
-	@echo -e "\e[34m$@\e[0m" || true
-	@cd examples && java -jar target/dapr-java-sdk-examples-exec.jar io.dapr.examples.workflows.moneytransfer.MoneyTransferClient
-
-
-start-client: 
+start-client:  ## 🚀 Start client
 	@echo -e "\e[34m$@\e[0m" || true
 	@dapr run --app-id demoworkflowclient --resources-path ./src/components --dapr-grpc-port 50001 -- java -jar target/dapr-workflow-java-money-transfer-0.0.1-SNAPSHOT.jar com.example.daprworkflowjavamoneytransfer.DaprWorkflowJavaMoneyTransferApplication
 
+run: clean build start-client ## 💿 Run app locally
+	
 
-start-worker: 
+dapr-dashboard: ## 🔬 Open the Dapr Dashboard
 	@echo -e "\e[34m$@\e[0m" || true
-	@dapr run --app-id demoworkflowworker --resources-path ./src/components --dapr-grpc-port 50001 -- java -jar target/dapr-workflow-java-money-transfer-0.0.1-SNAPSHOT.jar com.example.daprworkflowjavamoneytransfer.workflows.MoneyTransferWorker
+	@dapr dashboard -p 9000

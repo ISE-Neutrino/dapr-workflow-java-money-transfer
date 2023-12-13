@@ -13,7 +13,7 @@ import com.example.daprworkflowjavamoneytransfer.workflows.*;
 @RestController
 public class AppController {
 
-    @GetMapping("/create")
+    @GetMapping("/transfer")
     public String getCreateWorkflow() {
         try (DaprWorkflowClient client = new DaprWorkflowClient()) {
             String instanceId = client.scheduleNewWorkflow(MoneyTransferWorkflow.class);
@@ -31,7 +31,7 @@ public class AppController {
         }
     }
 
-    @GetMapping("/transfer")
+    @GetMapping("/create")
     public String getTransferWorkflow() {
         try (DaprWorkflowClient client = new DaprWorkflowClient()) {
             String instanceId = client.scheduleNewWorkflow(CreateAccountWorkflow.class);

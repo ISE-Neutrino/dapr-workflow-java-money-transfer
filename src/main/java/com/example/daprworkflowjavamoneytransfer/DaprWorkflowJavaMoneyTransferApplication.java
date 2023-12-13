@@ -23,7 +23,6 @@ public class DaprWorkflowJavaMoneyTransferApplication {
 		builder.registerWorkflow(MoneyTransferWorkflow.class);
 		builder.registerWorkflow(CreateAccountWorkflow.class);
 
-
 		// Register workflow activities, visible to all workflows
 		builder.registerActivity(NotifyActivity.class);
 

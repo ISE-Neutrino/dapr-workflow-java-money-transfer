@@ -8,12 +8,12 @@ public class MoneyTransferWorkflow extends Workflow {
   @Override
   public WorkflowStub create() {
     return ctx -> {
-      ctx.getLogger().info("---\n\tStarting Workflow: " + ctx.getName() + "\n---\n");
+      ctx.getLogger().info("\n---\n\tStarting Workflow: " + ctx.getName() + "\n---\n");
 
       String result = "";
-      result += ctx.callActivity(NotifyActivity.class.getName(), "\n === \n\t Testing workflow julio \n===\n", String.class).await();
+      result += ctx.callActivity(NotifyActivity.class.getName(), "\n === \n\t Testing workflow - Money Transfer \n===\n", String.class).await();
       
-      ctx.getLogger().info("---\n\tWorkflow finished with result: " + result + "\n---");
+      ctx.getLogger().info("\n---\n\tWorkflow finished with result: " + result + "\n---");
       ctx.complete(result);
     };
   }
