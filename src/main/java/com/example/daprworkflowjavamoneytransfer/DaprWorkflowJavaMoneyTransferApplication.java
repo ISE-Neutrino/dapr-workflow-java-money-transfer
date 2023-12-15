@@ -6,7 +6,11 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import io.dapr.workflows.runtime.WorkflowRuntime;
 import io.dapr.workflows.runtime.WorkflowRuntimeBuilder;
 import com.example.daprworkflowjavamoneytransfer.workflows.*;
+import com.example.daprworkflowjavamoneytransfer.workflows.activities.CreateAccountActivity;
+import com.example.daprworkflowjavamoneytransfer.workflows.activities.FraudDetectionActivity;
 import com.example.daprworkflowjavamoneytransfer.workflows.activities.NotifyActivity;
+import com.example.daprworkflowjavamoneytransfer.workflows.activities.RequestAccountApprovalActivity;
+import com.example.daprworkflowjavamoneytransfer.workflows.activities.TransferMoneyActivity;
 
 @SpringBootApplication
 public class DaprWorkflowJavaMoneyTransferApplication {
@@ -24,11 +28,15 @@ public class DaprWorkflowJavaMoneyTransferApplication {
 		builder.registerWorkflow(CreateAccountWorkflow.class);
 
 		// Register workflow activities, visible to all workflows
+		builder.registerActivity(CreateAccountActivity.class);
+		builder.registerActivity(FraudDetectionActivity.class);
 		builder.registerActivity(NotifyActivity.class);
+		builder.registerActivity(RequestAccountApprovalActivity.class);
+		builder.registerActivity(TransferMoneyActivity.class);
 
 		// Build and then start the workflow runtime pulling and executing tasks
 		try (WorkflowRuntime runtime = builder.build()) {
-			System.out.println("---\n\tStart workflow runtime\n---");
+			System.out.println("--- Start workflow runtime ---");
 			runtime.start();
 		}
 	}

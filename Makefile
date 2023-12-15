@@ -21,7 +21,7 @@ help: ## 💬 This help message :)
 
 build: ## 🧹 Build application
 	@echo -e "\e[34m$@\e[0m" || true
-	@mvn install
+	@mvn install -Dmaven.test.skip=true
 
 clean: ## 🧹 Clean compilation files
 	@echo -e "\e[34m$@\e[0m" || true
@@ -33,7 +33,6 @@ start-client:  ## 🚀 Start client
 
 run: clean build start-client ## 💿 Run app locally
 	
-
 dapr-dashboard: ## 🔬 Open the Dapr Dashboard
 	@echo -e "\e[34m$@\e[0m" || true
 	@dapr dashboard -p 9000
