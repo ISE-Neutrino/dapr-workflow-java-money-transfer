@@ -7,9 +7,7 @@ import io.dapr.workflows.runtime.WorkflowActivityContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.example.daprworkflowjavamoneytransfer.enums.ApprovalResult;
 import com.example.daprworkflowjavamoneytransfer.enums.TransferStatus;
-import com.example.daprworkflowjavamoneytransfer.model.CreateAccountRequest;
 import com.example.daprworkflowjavamoneytransfer.model.TransferRequest;
 import com.example.daprworkflowjavamoneytransfer.model.TransferResponse;
 
@@ -32,20 +30,18 @@ public class FraudDetectionActivity implements WorkflowActivity {
     logger.info("FraudDetection - Validating Transfer: {}", transferRequest);
 
     String outputMessage;
-    // accounts without a 1st deposit do not get approved
-    if (transferRequest.getAmount() > 1000) {
-      outputMessage = "Fraud detected, amount has to be less than 1000.";
-      logger.error(outputMessage);
-      logger.info("Rejecting Transfer for: {}", transferRequest);
-
+    // transfers with high ammounts do not get approved
+    if (!validAmount(transferRequest.getAmount()) ||
+        !validAccount(transferRequest.getSender()) ||
+        !validAccount(transferRequest.getReceiver())) {
+      outputMessage = String.format("Rejected Transfer: %s", transferRequest);
       transferRequest.setStatus(TransferStatus.REJECTED);
     } else {
-      // hard code to Validate any amount
-      outputMessage = String.format("Validated, amount is less than 1000 for: %s", transferRequest.toString());
-      logger.info(outputMessage);
-
+      outputMessage = String.format("Validated Transfer: %s", transferRequest);
       transferRequest.setStatus(TransferStatus.VALIDATED);
     }
+
+    logger.info(outputMessage);
 
     // save transfer Status in StateStore
     daprClient.saveState(STATE_STORE, transferRequest.getTransferId(), transferRequest.getStatus()).block();
@@ -55,6 +51,28 @@ public class FraudDetectionActivity implements WorkflowActivity {
         .status(transferRequest.getStatus().toString())
         .transferId(transferRequest.getTransferId())
         .build());
+  }
+
+  public boolean validAmount(double amount) {
+
+    if (amount > 1000) {
+      logger.error("Fraud detected, amount has to be less than 1000.");
+      return false;
+    }
+
+    // hard code to Validate any smaller amount
+    logger.info("Validated, amount is less than 1000.");
+    return true;
+  }
+
+  public boolean validAccount(String accountOwner) {
+
+    var accountBalance = daprClient.getState(STATE_STORE, accountOwner, Double.class).block();
+    if (accountBalance.getValue() == null) {
+      logger.error("Fraud detected, Account {} does not exist.", accountOwner);
+      return false;
+    }
+    return true;
   }
 
 }

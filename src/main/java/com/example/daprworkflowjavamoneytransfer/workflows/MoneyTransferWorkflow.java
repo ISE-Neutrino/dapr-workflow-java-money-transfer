@@ -3,17 +3,12 @@ package com.example.daprworkflowjavamoneytransfer.workflows;
 import io.dapr.workflows.Workflow;
 import io.dapr.workflows.WorkflowStub;
 
-import com.example.daprworkflowjavamoneytransfer.enums.ApprovalResult;
 import com.example.daprworkflowjavamoneytransfer.enums.TransferStatus;
-import com.example.daprworkflowjavamoneytransfer.model.AccountResponse;
-import com.example.daprworkflowjavamoneytransfer.model.CreateAccountResponse;
 import com.example.daprworkflowjavamoneytransfer.model.Notification;
 import com.example.daprworkflowjavamoneytransfer.model.TransferRequest;
 import com.example.daprworkflowjavamoneytransfer.model.TransferResponse;
-import com.example.daprworkflowjavamoneytransfer.workflows.activities.CreateAccountActivity;
 import com.example.daprworkflowjavamoneytransfer.workflows.activities.FraudDetectionActivity;
 import com.example.daprworkflowjavamoneytransfer.workflows.activities.NotifyActivity;
-import com.example.daprworkflowjavamoneytransfer.workflows.activities.RequestAccountApprovalActivity;
 import com.example.daprworkflowjavamoneytransfer.workflows.activities.TransferMoneyActivity;
 
 public class MoneyTransferWorkflow extends Workflow {

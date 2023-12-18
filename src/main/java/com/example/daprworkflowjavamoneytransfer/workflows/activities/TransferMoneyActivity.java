@@ -33,35 +33,8 @@ public class TransferMoneyActivity implements WorkflowActivity {
 
     String outputMessage;
 
-    // check sender exists
     var senderBalance = daprClient.getState(STATE_STORE, transferRequest.getSender(), Double.class).block();
-
-    if (senderBalance.getValue() == null) {
-      outputMessage = String.format("Sender %s does not exist.", transferRequest.getSender());
-      logger.info(outputMessage);
-      daprClient.saveState(STATE_STORE, transferRequest.getTransferId(), TransferStatus.REJECTED).block();
-
-      return TransferResponse.builder()
-          .message(outputMessage)
-          .status(TransferStatus.REJECTED.toString())
-          .transferId(transferRequest.getTransferId())
-          .build();
-    }
-
-    // check receiver exists
     var receiverBalance = daprClient.getState(STATE_STORE, transferRequest.getReceiver(), Double.class).block();
-
-    if (receiverBalance.getValue() == null) {
-      outputMessage = String.format("Receiver %s does not exist.", transferRequest.getReceiver());
-      logger.info(outputMessage);
-      daprClient.saveState(STATE_STORE, transferRequest.getTransferId(), TransferStatus.REJECTED).block();
-
-      return TransferResponse.builder()
-          .message(outputMessage)
-          .status(TransferStatus.REJECTED.toString())
-          .transferId(transferRequest.getTransferId())
-          .build();
-    }
 
     // check amount in sender balance
     if (senderBalance.getValue() - transferRequest.getAmount() < 0) {
