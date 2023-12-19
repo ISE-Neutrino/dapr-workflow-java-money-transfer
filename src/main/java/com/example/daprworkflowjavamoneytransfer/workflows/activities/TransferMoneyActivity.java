@@ -38,9 +38,11 @@ public class TransferMoneyActivity implements WorkflowActivity {
 
     // check amount in sender balance
     if (senderBalance.getValue() - transferRequest.getAmount() < 0) {
-      outputMessage = String.format("Insufficient funds.");
+      outputMessage = String.format("Insufficient Funds.");
       logger.info(outputMessage);
-      daprClient.saveState(STATE_STORE, transferRequest.getTransferId(), TransferStatus.REJECTED).block();
+      transferRequest.setStatus(TransferStatus.REJECTED);
+
+      daprClient.saveState(STATE_STORE, transferRequest.getTransferId(), transferRequest).block();
 
       return TransferResponse.builder()
           .message(outputMessage)
@@ -52,6 +54,7 @@ public class TransferMoneyActivity implements WorkflowActivity {
     // update sender and receiver balances
     var newSenderBalance = senderBalance.getValue() - transferRequest.getAmount();
     var newReceiverBalance = receiverBalance.getValue() + transferRequest.getAmount();
+    
     transferRequest.setStatus(TransferStatus.APPROVED);
 
     // Save states

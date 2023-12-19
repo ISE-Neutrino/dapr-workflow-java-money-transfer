@@ -31,20 +31,26 @@ public class FraudDetectionActivity implements WorkflowActivity {
 
     String outputMessage;
     // transfers with high ammounts do not get approved
-    if (!validAmount(transferRequest.getAmount()) ||
-        !validAccount(transferRequest.getSender()) ||
-        !validAccount(transferRequest.getReceiver())) {
-      outputMessage = String.format("Rejected Transfer: %s", transferRequest);
+    if (!validAmount(transferRequest.getAmount())) {
+      outputMessage = String.format("Rejected Transfer - Invalid Amount: %s", transferRequest.getAmount());
       transferRequest.setStatus(TransferStatus.REJECTED);
+
+    } else if (!validAccount(transferRequest.getSender())) {
+      outputMessage = String.format("Rejected Transfer - Invalid Account: %s", transferRequest.getSender());
+      transferRequest.setStatus(TransferStatus.REJECTED);
+
+    } else if (!validAccount(transferRequest.getReceiver())) {
+      outputMessage = String.format("Rejected Transfer - Invalid Account: %s", transferRequest.getReceiver());
+      transferRequest.setStatus(TransferStatus.REJECTED);
+
     } else {
-      outputMessage = String.format("Validated Transfer: %s", transferRequest);
+      outputMessage = String.format("Validated Transfer: %s", transferRequest.toString());
       transferRequest.setStatus(TransferStatus.VALIDATED);
     }
-
     logger.info(outputMessage);
 
     // save transfer Status in StateStore
-    daprClient.saveState(STATE_STORE, transferRequest.getTransferId(), transferRequest.getStatus()).block();
+    daprClient.saveState(STATE_STORE, transferRequest.getTransferId(), transferRequest).block();
 
     return (TransferResponse.builder()
         .message(outputMessage)

@@ -24,7 +24,7 @@ public class RequestAccountApprovalActivity implements WorkflowActivity {
       return ApprovalResult.REJECTED;
     }
 
-    // hard code to Approved any amount
+    // hard code to Approve any amount
     logger.info("Approving account creation for: {}", newAccountRequest);
     return ApprovalResult.APPROVED;
   }

@@ -13,8 +13,8 @@ import lombok.extern.jackson.Jacksonized;
 @Jacksonized
 public class AccountResponse {
     private String owner;
-    private double amount;
-
+    private Double amount;
+    
     public String toString() {
         return "Owner: " + owner + ", Amount: " + amount;
     }
