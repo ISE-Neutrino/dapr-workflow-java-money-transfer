@@ -3,18 +3,20 @@ package com.example.daprworkflowjavamoneytransfer.workflows;
 import io.dapr.workflows.Workflow;
 import io.dapr.workflows.WorkflowStub;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.example.daprworkflowjavamoneytransfer.enums.ApprovalResult;
 import com.example.daprworkflowjavamoneytransfer.enums.TransferStatus;
-import com.example.daprworkflowjavamoneytransfer.model.AccountResponse;
-import com.example.daprworkflowjavamoneytransfer.model.CreateAccountResponse;
 import com.example.daprworkflowjavamoneytransfer.model.Notification;
 import com.example.daprworkflowjavamoneytransfer.model.TransferRequest;
 import com.example.daprworkflowjavamoneytransfer.model.TransferResponse;
-import com.example.daprworkflowjavamoneytransfer.workflows.activities.CreateAccountActivity;
+import com.example.daprworkflowjavamoneytransfer.workflows.activities.Approver1Activity;
+import com.example.daprworkflowjavamoneytransfer.workflows.activities.Approver2Activity;
 import com.example.daprworkflowjavamoneytransfer.workflows.activities.FraudDetectionActivity;
 import com.example.daprworkflowjavamoneytransfer.workflows.activities.NotifyActivity;
-import com.example.daprworkflowjavamoneytransfer.workflows.activities.RequestAccountApprovalActivity;
 import com.example.daprworkflowjavamoneytransfer.workflows.activities.TransferMoneyActivity;
+import com.microsoft.durabletask.Task;
 
 public class MoneyTransferWorkflow extends Workflow {
   @Override
@@ -24,12 +26,17 @@ public class MoneyTransferWorkflow extends Workflow {
 
       TransferRequest transferRequest = ctx.getInput(TransferRequest.class);
 
-      // Notify a transfer request
+      // ------------------------
+      // Notify transfer request
+      // ------------------------
       Notification notification = Notification.builder()
           .message("Money Transfer Request Received: " + transferRequest.toString()).build();
       ctx.callActivity(NotifyActivity.class.getName(), notification).await();
 
+
+      // --------------------------------------
       // Validate Request with Fraud Detection
+      // --------------------------------------
       TransferResponse validationResponse = ctx
           .callActivity(FraudDetectionActivity.class.getName(), transferRequest, TransferResponse.class)
           .await();
@@ -42,10 +49,36 @@ public class MoneyTransferWorkflow extends Workflow {
         return;
       }
 
-      // TODO:: Approval from both actors
 
+      // ----------------------------------
+      // Ask Approval from multiple actors
+      // ----------------------------------
+      List<Task<ApprovalResult>> approversList = new ArrayList<Task<ApprovalResult>>() {
+        {
+          add(ctx.callActivity(Approver1Activity.class.getName(), transferRequest, ApprovalResult.class));
+          add(ctx.callActivity(Approver2Activity.class.getName(), transferRequest, ApprovalResult.class));
+        }
+      };
+
+      List<ApprovalResult> approversResult = ctx.allOf(approversList).await();
+      if (approversResult.stream().anyMatch(t -> t.equals(ApprovalResult.REJECTED))) {
+        notification.setMessage("Transfer was not approved from all actors");
+        ctx.callActivity(NotifyActivity.class.getName(), notification).await();
+
+        ctx.complete(TransferResponse.builder()
+            .message("Transfer was not approved from all approvers")
+            .status(TransferStatus.REJECTED.toString())
+            .transferId(transferRequest.getTransferId())
+            .build());
+        return;
+      }
+
+
+      // ----------------------------
       // Perform the actual transfer
-      var result = ctx.callActivity(TransferMoneyActivity.class.getName(), transferRequest, TransferResponse.class).await();
+      // ----------------------------
+      var result = ctx.callActivity(TransferMoneyActivity.class.getName(), transferRequest, TransferResponse.class)
+          .await();
 
       notification.setMessage(result.getMessage());
       ctx.callActivity(NotifyActivity.class.getName(), notification).await();

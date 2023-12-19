@@ -6,6 +6,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import io.dapr.workflows.runtime.WorkflowRuntime;
 import io.dapr.workflows.runtime.WorkflowRuntimeBuilder;
 import com.example.daprworkflowjavamoneytransfer.workflows.*;
+import com.example.daprworkflowjavamoneytransfer.workflows.activities.Approver1Activity;
+import com.example.daprworkflowjavamoneytransfer.workflows.activities.Approver2Activity;
 import com.example.daprworkflowjavamoneytransfer.workflows.activities.CreateAccountActivity;
 import com.example.daprworkflowjavamoneytransfer.workflows.activities.FraudDetectionActivity;
 import com.example.daprworkflowjavamoneytransfer.workflows.activities.NotifyActivity;
@@ -28,6 +30,8 @@ public class DaprWorkflowJavaMoneyTransferApplication {
 		builder.registerWorkflow(CreateAccountWorkflow.class);
 
 		// Register workflow activities, visible to all workflows
+		builder.registerActivity(Approver1Activity.class);
+		builder.registerActivity(Approver2Activity.class);
 		builder.registerActivity(CreateAccountActivity.class);
 		builder.registerActivity(FraudDetectionActivity.class);
 		builder.registerActivity(NotifyActivity.class);
