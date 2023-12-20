@@ -36,3 +36,15 @@ run: clean build start-client ## 💿 Run app locally
 dapr-dashboard: ## 🔬 Open the Dapr Dashboard
 	@echo -e "\e[34m$@\e[0m" || true
 	@dapr dashboard -p 9000
+
+init-dapr: ## 🧹 Initialize Dapr
+	@echo -e "\e[34m$@\e[0m" || true
+	@dapr init
+
+stop-dapr: ## 🧹 Uninstall Dapr
+	@echo -e "\e[34m$@\e[0m" || true
+	@dapr uninstall
+
+test: ## 🧪 Run tests
+	@echo -e "\e[34m$@\e[0m" || true
+	@./scripts/test.sh

@@ -46,7 +46,7 @@ public class AppController {
 
             request.setTransferId(TransferRequest.generateId());
             request.setStatus(TransferStatus.PENDING);
-            
+
             String instanceId = client.scheduleNewWorkflow(MoneyTransferWorkflow.class, request);
             System.out.printf("Started a new Money Transfer workflow with instance ID: %s%n", instanceId);
 
@@ -97,6 +97,29 @@ public class AppController {
                         .owner(owner)
                         .amount(accountAmount.getValue())
                         .build());
+
+            } catch (Exception e) {
+
+                logger.error("Error while getting account request: " + e.getMessage());
+                return ResponseEntity.badRequest().body(e.getMessage());
+            }
+        });
+    }
+
+    @GetMapping(path = "/transfers/{transferId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Mono<ResponseEntity> getTransfer(@PathVariable String transferId) {
+
+        return Mono.fromSupplier(() -> {
+            try {
+                logger.info("Get Transfer State Received");
+
+                var transferRequest = daprClient.getState(STATE_STORE, transferId, TransferRequest.class).block();
+                if (transferRequest.getValue() == null) {
+                    logger.error("Transfer Request for id {} does not exist.", transferId);
+                    return ResponseEntity.badRequest().body(String.format("Transfer Request for id %s does not exist.", transferId));
+                }
+
+                return ResponseEntity.ok(transferRequest.getValue());
 
             } catch (Exception e) {
 
