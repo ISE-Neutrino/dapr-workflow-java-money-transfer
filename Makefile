@@ -44,3 +44,7 @@ init-dapr: ## 🧹 Initialize Dapr
 stop-dapr: ## 🧹 Uninstall Dapr
 	@echo -e "\e[34m$@\e[0m" || true
 	@dapr uninstall
+
+test: ## 🧪 Run tests
+	@echo -e "\e[34m$@\e[0m" || true
+	@./scripts/test.sh
