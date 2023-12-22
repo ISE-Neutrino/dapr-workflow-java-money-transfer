@@ -17,16 +17,17 @@ failed() {
 }
 
 # Create aacounts
-acc1=$(curl -X POST \
-  http://${FRONT_END_IP}/create \
+echo -e "\n🧪 Creating accounts"
+acc1=$(curl -X POST -s\
+  http://${FRONT_END_IP}/accounts \
   -H 'Content-Type: application/json' \
   -d '{
     "owner": "A",
     "amount": 100
 }' | jq)
 
-acc2=$(curl -X POST \
-  http://${FRONT_END_IP}/create \
+acc2=$(curl -X POST -s\
+  http://${FRONT_END_IP}/accounts \
   -H 'Content-Type: application/json' \
   -d '{
     "owner": "B",
@@ -35,18 +36,19 @@ acc2=$(curl -X POST \
 
 
 #show account balances
-curl -X GET \
+curl -X GET -s\
     http://${FRONT_END_IP}/accounts/A \
     -H 'Content-Type: application/json' | jq
 
-curl -X GET \
+curl -X GET -s\
     http://${FRONT_END_IP}/accounts/B \
     -H 'Content-Type: application/json' | jq
 
 
 # transfer money
-transfer=$(curl -X POST \
-  http://${FRONT_END_IP}/transfer \
+echo -e "\n🧪 Transfering money"
+transfer=$(curl -X POST -s\
+  http://${FRONT_END_IP}/transfers \
   -H 'Content-Type: application/json' \
   -d '{
     "sender": "A",
@@ -54,20 +56,21 @@ transfer=$(curl -X POST \
     "amount": 23
 }' | jq)
 
-echo $transfer
+# echo $transfer | jq
 
 transferId=$(echo $transfer | jq -r '.transferId')
 echo "TransferId: $transferId"
 
 # Show results
-curl -X GET \
+echo -e "\n🧪 Showing results"
+curl -X GET -s\
   http://${FRONT_END_IP}/transfers/${transferId} \
   -H 'Content-Type: application/json' | jq
 
-curl -X GET \
+curl -X GET -s\
     http://${FRONT_END_IP}/accounts/A \
     -H 'Content-Type: application/json' | jq
 
-curl -X GET \
+curl -X GET -s\
     http://${FRONT_END_IP}/accounts/B \
     -H 'Content-Type: application/json' | jq

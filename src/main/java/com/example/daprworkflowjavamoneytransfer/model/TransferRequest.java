@@ -1,7 +1,6 @@
 package com.example.daprworkflowjavamoneytransfer.model;
 
 import com.aventrix.jnanoid.jnanoid.NanoIdUtils;
-import com.example.daprworkflowjavamoneytransfer.enums.TransferStatus;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -15,7 +14,6 @@ public class TransferRequest {
     private String receiver;
     private double amount;
     private String transferId;
-    private TransferStatus status;
 
     public String toString() {
         return "Sender: " + sender + ", Receiver: " + receiver + ", Amount: " + amount;

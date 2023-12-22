@@ -5,6 +5,7 @@ public enum TransferStatus {
     ACCEPTED("ACCEPTED"),
     APPROVED("APPROVED"),
     VALIDATED("VALIDATED"),
+    COMPLETED("COMPLETED"),
     REJECTED("REJECTED");
 
     private final String stringValue;
