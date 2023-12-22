@@ -75,7 +75,7 @@ make dapr-dashboard
 ### REST API Endpoints
 
 - Create Account:
-    - Endpoint: **POST /create**
+    - Endpoint: **POST /accounts**
     - Request Body: JSON with account details.
         ```json
         {
@@ -89,7 +89,7 @@ make dapr-dashboard
     - Returns JSON with account details.
 
 - Transfer Money:
-    - Endpoint: **POST /transfer**
+    - Endpoint: **POST /transfers**
     - Request Body: JSON with transfer details (source, destination, amount).
         ```json
         {

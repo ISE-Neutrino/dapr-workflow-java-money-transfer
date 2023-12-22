@@ -27,40 +27,36 @@ public class FraudDetectionActivity implements WorkflowActivity {
   public Object run(WorkflowActivityContext ctx) {
     TransferRequest transferRequest = ctx.getInput(TransferRequest.class);
 
-    logger.info("FraudDetection - Validating Transfer: {}", transferRequest);
+    TransferResponse transferResponse = TransferResponse.builder()
+        .transferId(transferRequest.getTransferId())
+        .status(TransferStatus.ACCEPTED.toString())
+        .message(String.format("Transfer %s Accepted. Validating...", transferRequest.getTransferId()))
+        .build();
+    saveTransferState(transferResponse);
 
-    String outputMessage;
     // transfers with high ammounts do not get approved
     if (!validAmount(transferRequest.getAmount())) {
-      outputMessage = String.format("Rejected Transfer - Invalid Amount: %s", transferRequest.getAmount());
-      transferRequest.setStatus(TransferStatus.REJECTED);
+      transferResponse.setStatus(TransferStatus.REJECTED.toString());
+      transferResponse.setMessage(String.format("Rejected Transfer - Invalid Amount: %s", transferRequest.getAmount()));
 
     } else if (!validAccount(transferRequest.getSender())) {
-      outputMessage = String.format("Rejected Transfer - Invalid Account: %s", transferRequest.getSender());
-      transferRequest.setStatus(TransferStatus.REJECTED);
+      transferResponse.setStatus(TransferStatus.REJECTED.toString());
+      transferResponse.setMessage(String.format("Rejected Transfer - Invalid Sender: %s", transferRequest.getSender()));
 
     } else if (!validAccount(transferRequest.getReceiver())) {
-      outputMessage = String.format("Rejected Transfer - Invalid Account: %s", transferRequest.getReceiver());
-      transferRequest.setStatus(TransferStatus.REJECTED);
+      transferResponse.setStatus(TransferStatus.REJECTED.toString());
+      transferResponse.setMessage(String.format("Rejected Transfer - Invalid Receiver: %s", transferRequest.getReceiver()));
 
     } else {
-      outputMessage = String.format("Validated Transfer: %s", transferRequest.toString());
-      transferRequest.setStatus(TransferStatus.VALIDATED);
+      transferResponse.setStatus(TransferStatus.VALIDATED.toString());
+      transferResponse.setMessage(String.format("Validated Transfer: %s", transferRequest.getTransferId()));
     }
-    logger.info(outputMessage);
 
-    // save transfer Status in StateStore
-    daprClient.saveState(STATE_STORE, transferRequest.getTransferId(), transferRequest).block();
-
-    return (TransferResponse.builder()
-        .message(outputMessage)
-        .status(transferRequest.getStatus().toString())
-        .transferId(transferRequest.getTransferId())
-        .build());
+    saveTransferState(transferResponse);
+    return transferResponse;
   }
 
   public boolean validAmount(double amount) {
-
     if (amount > 1000) {
       logger.error("Fraud detected, amount has to be less than 1000.");
       return false;
@@ -72,13 +68,17 @@ public class FraudDetectionActivity implements WorkflowActivity {
   }
 
   public boolean validAccount(String accountOwner) {
-
     var accountBalance = daprClient.getState(STATE_STORE, accountOwner, Double.class).block();
     if (accountBalance.getValue() == null) {
       logger.error("Fraud detected, Account {} does not exist.", accountOwner);
       return false;
     }
     return true;
+  }
+
+  private void saveTransferState(TransferResponse transferResponse) {
+    logger.info(transferResponse.getMessage());
+    daprClient.saveState(STATE_STORE, transferResponse.getTransferId(), transferResponse).block();
   }
 
 }

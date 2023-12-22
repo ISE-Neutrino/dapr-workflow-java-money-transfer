@@ -18,7 +18,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
-import com.example.daprworkflowjavamoneytransfer.enums.TransferStatus;
 import com.example.daprworkflowjavamoneytransfer.model.AccountResponse;
 import com.example.daprworkflowjavamoneytransfer.model.CreateAccountRequest;
 import com.example.daprworkflowjavamoneytransfer.model.CreateAccountResponse;
@@ -40,12 +39,11 @@ public class AppController {
         this.daprClient = new DaprClientBuilder().build();
     }
 
-    @PostMapping(path = "/transfer", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(path = "/transfers", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<TransferResponse> createTransferRequest(@RequestBody TransferRequest request) {
         try (DaprWorkflowClient client = new DaprWorkflowClient()) {
 
             request.setTransferId(TransferRequest.generateId());
-            request.setStatus(TransferStatus.PENDING);
 
             String instanceId = client.scheduleNewWorkflow(MoneyTransferWorkflow.class, request);
             System.out.printf("Started a new Money Transfer workflow with instance ID: %s%n", instanceId);
@@ -62,7 +60,7 @@ public class AppController {
         }
     }
 
-    @PostMapping(path = "/create", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(path = "/accounts", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<CreateAccountResponse> createAccount(@RequestBody CreateAccountRequest request) {
         try (DaprWorkflowClient client = new DaprWorkflowClient()) {
             String instanceId = client.scheduleNewWorkflow(CreateAccountWorkflow.class, request);
@@ -111,15 +109,15 @@ public class AppController {
 
         return Mono.fromSupplier(() -> {
             try {
-                logger.info("Get Transfer State Received");
+                logger.info("Get Transfer State Received: transferId: {}", transferId);
 
-                var transferRequest = daprClient.getState(STATE_STORE, transferId, TransferRequest.class).block();
-                if (transferRequest.getValue() == null) {
+                var transferResponse = daprClient.getState(STATE_STORE, transferId, TransferResponse.class).block();
+                if (transferResponse.getValue() == null) {
                     logger.error("Transfer Request for id {} does not exist.", transferId);
                     return ResponseEntity.badRequest().body(String.format("Transfer Request for id %s does not exist.", transferId));
                 }
 
-                return ResponseEntity.ok(transferRequest.getValue());
+                return ResponseEntity.ok(transferResponse.getValue());
 
             } catch (Exception e) {
 

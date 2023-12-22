@@ -7,9 +7,7 @@ import io.dapr.workflows.runtime.WorkflowActivityContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.example.daprworkflowjavamoneytransfer.enums.ApprovalResult;
 import com.example.daprworkflowjavamoneytransfer.enums.TransferStatus;
-import com.example.daprworkflowjavamoneytransfer.model.CreateAccountRequest;
 import com.example.daprworkflowjavamoneytransfer.model.TransferRequest;
 import com.example.daprworkflowjavamoneytransfer.model.TransferResponse;
 
@@ -29,48 +27,49 @@ public class TransferMoneyActivity implements WorkflowActivity {
   public Object run(WorkflowActivityContext ctx) {
 
     TransferRequest transferRequest = ctx.getInput(TransferRequest.class);
-    transferRequest.setStatus(TransferStatus.APPROVED);
 
-    String outputMessage;
-
-    var senderBalance = daprClient.getState(STATE_STORE, transferRequest.getSender(), Double.class).block();
-    var receiverBalance = daprClient.getState(STATE_STORE, transferRequest.getReceiver(), Double.class).block();
+    TransferResponse transferResponse = TransferResponse.builder()
+        .transferId(transferRequest.getTransferId())
+        .status(TransferStatus.APPROVED.toString())
+        .message("Transfer Approved. Updating Balances...")
+        .build();
+    saveTransferState(transferResponse);
 
     // check amount in sender balance
+    var senderBalance = daprClient.getState(STATE_STORE, transferRequest.getSender(), Double.class).block();
     if (senderBalance.getValue() - transferRequest.getAmount() < 0) {
-      outputMessage = String.format("Insufficient Funds.");
-      logger.info(outputMessage);
-      transferRequest.setStatus(TransferStatus.REJECTED);
+      transferResponse.setMessage("Insufficient Funds.");
+      transferResponse.setStatus(TransferStatus.REJECTED.toString());
+      saveTransferState(transferResponse);
 
-      daprClient.saveState(STATE_STORE, transferRequest.getTransferId(), transferRequest).block();
-
-      return TransferResponse.builder()
-          .message(outputMessage)
-          .status(TransferStatus.REJECTED.toString())
-          .transferId(transferRequest.getTransferId())
-          .build();
+      return transferResponse;
     }
 
+    updateBalances(transferRequest);
+
+    transferResponse.setStatus(TransferStatus.COMPLETED.toString());
+    transferResponse.setMessage("Transfer Completed.");
+    saveTransferState(transferResponse);
+
+    return transferResponse;
+  }
+
+  private void updateBalances(TransferRequest transferRequest) {
     // update sender and receiver balances
+    var senderBalance = daprClient.getState(STATE_STORE, transferRequest.getSender(), Double.class).block();
+    var receiverBalance = daprClient.getState(STATE_STORE, transferRequest.getReceiver(), Double.class).block();
+    
     var newSenderBalance = senderBalance.getValue() - transferRequest.getAmount();
     var newReceiverBalance = receiverBalance.getValue() + transferRequest.getAmount();
-    
-    transferRequest.setStatus(TransferStatus.APPROVED);
 
     // Save states
     daprClient.saveState(STATE_STORE, transferRequest.getSender(), newSenderBalance).block();
     daprClient.saveState(STATE_STORE, transferRequest.getReceiver(), newReceiverBalance).block();
-    daprClient.saveState(STATE_STORE, transferRequest.getTransferId(), transferRequest).block();
+  }
 
-    outputMessage = String.format("Transfer completed: transferId: %s, Transfer: %s", transferRequest.getTransferId(),
-        transferRequest.toString());
-    logger.info(outputMessage);
-
-    return TransferResponse.builder()
-        .message(outputMessage)
-        .status(TransferStatus.APPROVED.toString())
-        .transferId(transferRequest.getTransferId())
-        .build();
+  private void saveTransferState(TransferResponse transferResponse) {
+    logger.info(transferResponse.getMessage());
+    daprClient.saveState(STATE_STORE, transferResponse.getTransferId(), transferResponse).block();
   }
 
 }

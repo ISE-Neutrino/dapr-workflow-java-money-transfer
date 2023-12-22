@@ -19,6 +19,7 @@ import com.example.daprworkflowjavamoneytransfer.workflows.activities.TransferMo
 import com.microsoft.durabletask.Task;
 
 public class MoneyTransferWorkflow extends Workflow {
+
   @Override
   public WorkflowStub create() {
     return ctx -> {
@@ -37,15 +38,13 @@ public class MoneyTransferWorkflow extends Workflow {
       // --------------------------------------
       // Validate Request with Fraud Detection
       // --------------------------------------
-      TransferResponse validationResponse = ctx
+      TransferResponse transferResponse = ctx
           .callActivity(FraudDetectionActivity.class.getName(), transferRequest, TransferResponse.class)
           .await();
-      if (validationResponse.getStatus().equals(TransferStatus.REJECTED.toString())) {
-
-        notification.setMessage(validationResponse.getMessage());
+      if (transferResponse.getStatus().equals(TransferStatus.REJECTED.toString())) {
+        notification.setMessage(transferResponse.getMessage());
         ctx.callActivity(NotifyActivity.class.getName(), notification).await();
-
-        ctx.complete(validationResponse);
+        ctx.complete(transferResponse);
         return;
       }
 
@@ -59,7 +58,6 @@ public class MoneyTransferWorkflow extends Workflow {
           add(ctx.callActivity(Approver2Activity.class.getName(), transferRequest, ApprovalResult.class));
         }
       };
-
       List<ApprovalResult> approversResult = ctx.allOf(approversList).await();
       if (approversResult.stream().anyMatch(t -> t.equals(ApprovalResult.REJECTED))) {
         notification.setMessage("Transfer was not approved from all actors");
@@ -73,18 +71,17 @@ public class MoneyTransferWorkflow extends Workflow {
         return;
       }
 
-
       // ----------------------------
       // Perform the actual transfer
       // ----------------------------
-      var result = ctx.callActivity(TransferMoneyActivity.class.getName(), transferRequest, TransferResponse.class)
+      transferResponse = ctx
+          .callActivity(TransferMoneyActivity.class.getName(), transferRequest, TransferResponse.class)
           .await();
 
-      notification.setMessage(result.getMessage());
+      notification.setMessage(transferResponse.getMessage());
       ctx.callActivity(NotifyActivity.class.getName(), notification).await();
 
-      ctx.complete(result);
-
+      ctx.complete(transferResponse);
       ctx.getLogger().info("--- Workflow finished with result: " + notification.toString() + " ---");
     };
   }
