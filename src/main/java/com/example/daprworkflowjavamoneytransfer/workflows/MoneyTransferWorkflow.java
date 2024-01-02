@@ -3,20 +3,16 @@ package com.example.daprworkflowjavamoneytransfer.workflows;
 import io.dapr.workflows.Workflow;
 import io.dapr.workflows.WorkflowStub;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.time.Duration;
+import java.util.concurrent.TimeoutException;
 
-import com.example.daprworkflowjavamoneytransfer.enums.ApprovalResult;
 import com.example.daprworkflowjavamoneytransfer.enums.TransferStatus;
 import com.example.daprworkflowjavamoneytransfer.model.Notification;
 import com.example.daprworkflowjavamoneytransfer.model.TransferRequest;
 import com.example.daprworkflowjavamoneytransfer.model.TransferResponse;
-import com.example.daprworkflowjavamoneytransfer.workflows.activities.Approver1Activity;
-import com.example.daprworkflowjavamoneytransfer.workflows.activities.Approver2Activity;
 import com.example.daprworkflowjavamoneytransfer.workflows.activities.FraudDetectionActivity;
 import com.example.daprworkflowjavamoneytransfer.workflows.activities.NotifyActivity;
 import com.example.daprworkflowjavamoneytransfer.workflows.activities.TransferMoneyActivity;
-import com.microsoft.durabletask.Task;
 
 public class MoneyTransferWorkflow extends Workflow {
 
@@ -48,27 +44,21 @@ public class MoneyTransferWorkflow extends Workflow {
         return;
       }
 
+      if (transferRequest.getAmount() > 100) {
+        ctx.getLogger().info("Waiting for approval...");
+          Boolean approved = ctx.waitForExternalEvent("Approval", Duration.ofMinutes(5), boolean.class).await();
+          if (!approved) {
+            ctx.getLogger().info("approval denied - send a notification");
+            notification.setMessage("Transfer was not approved from all actors");
+            ctx.callActivity(NotifyActivity.class.getName(), notification).await();
 
-      // ----------------------------------
-      // Ask Approval from multiple actors
-      // ----------------------------------
-      List<Task<ApprovalResult>> approversList = new ArrayList<Task<ApprovalResult>>() {
-        {
-          add(ctx.callActivity(Approver1Activity.class.getName(), transferRequest, ApprovalResult.class));
-          add(ctx.callActivity(Approver2Activity.class.getName(), transferRequest, ApprovalResult.class));
-        }
-      };
-      List<ApprovalResult> approversResult = ctx.allOf(approversList).await();
-      if (approversResult.stream().anyMatch(t -> t.equals(ApprovalResult.REJECTED))) {
-        notification.setMessage("Transfer was not approved from all actors");
-        ctx.callActivity(NotifyActivity.class.getName(), notification).await();
-
-        ctx.complete(TransferResponse.builder()
-            .message("Transfer was not approved from all approvers")
-            .status(TransferStatus.REJECTED.toString())
-            .transferId(transferRequest.getTransferId())
-            .build());
-        return;
+            ctx.complete(TransferResponse.builder()
+              .message("Transfer was not approved from all approvers")
+              .status(TransferStatus.REJECTED.toString())
+              .transferId(transferRequest.getTransferId())
+              .build());
+            return;
+          }
       }
 
       // ----------------------------
