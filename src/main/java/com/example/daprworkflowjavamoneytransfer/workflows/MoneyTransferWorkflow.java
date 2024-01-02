@@ -1,10 +1,14 @@
 package com.example.daprworkflowjavamoneytransfer.workflows;
 
+import io.dapr.client.DaprClient;
+import io.dapr.client.DaprClientBuilder;
 import io.dapr.workflows.Workflow;
 import io.dapr.workflows.WorkflowStub;
 
 import java.time.Duration;
-import java.util.concurrent.TimeoutException;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.example.daprworkflowjavamoneytransfer.enums.TransferStatus;
 import com.example.daprworkflowjavamoneytransfer.model.Notification;
@@ -13,8 +17,17 @@ import com.example.daprworkflowjavamoneytransfer.model.TransferResponse;
 import com.example.daprworkflowjavamoneytransfer.workflows.activities.FraudDetectionActivity;
 import com.example.daprworkflowjavamoneytransfer.workflows.activities.NotifyActivity;
 import com.example.daprworkflowjavamoneytransfer.workflows.activities.TransferMoneyActivity;
+import com.microsoft.durabletask.TaskCanceledException;
 
 public class MoneyTransferWorkflow extends Workflow {
+
+  private static final String STATE_STORE = "statestore";
+  private static Logger logger = LoggerFactory.getLogger(MoneyTransferWorkflow.class);
+  private DaprClient daprClient;
+
+  public MoneyTransferWorkflow() {
+    this.daprClient = new DaprClientBuilder().build();
+  }
 
   @Override
   public WorkflowStub create() {
@@ -29,7 +42,6 @@ public class MoneyTransferWorkflow extends Workflow {
       Notification notification = Notification.builder()
           .message("Money Transfer Request Received: " + transferRequest.toString()).build();
       ctx.callActivity(NotifyActivity.class.getName(), notification).await();
-
 
       // --------------------------------------
       // Validate Request with Fraud Detection
@@ -46,19 +58,35 @@ public class MoneyTransferWorkflow extends Workflow {
 
       if (transferRequest.getAmount() > 100) {
         ctx.getLogger().info("Waiting for approval...");
-          Boolean approved = ctx.waitForExternalEvent("Approval", Duration.ofMinutes(5), boolean.class).await();
+        try {
+          Boolean approved = ctx.waitForExternalEvent("Approval", Duration.ofMinutes(1), boolean.class).await();
           if (!approved) {
             ctx.getLogger().info("approval denied - send a notification");
-            notification.setMessage("Transfer was not approved from all actors");
+            notification.setMessage("Transfer was not approved from all actors.");
             ctx.callActivity(NotifyActivity.class.getName(), notification).await();
 
-            ctx.complete(TransferResponse.builder()
-              .message("Transfer was not approved from all approvers")
-              .status(TransferStatus.REJECTED.toString())
-              .transferId(transferRequest.getTransferId())
-              .build());
+            transferResponse = TransferResponse.builder()
+                .message("Transfer was not approved from all actors.")
+                .status(TransferStatus.REJECTED.toString())
+                .transferId(transferRequest.getTransferId())
+                .build();
+
+            saveTransferState(transferResponse);
+            ctx.complete(transferResponse);
             return;
           }
+        } catch (TaskCanceledException ex) {
+          transferResponse = TransferResponse.builder()
+              .message("Approval timed-out.")
+              .status(TransferStatus.REJECTED.toString())
+              .transferId(transferRequest.getTransferId())
+              .build();
+
+          saveTransferState(transferResponse);
+          ctx.complete(transferResponse);
+
+          return;
+        }
       }
 
       // ----------------------------
@@ -74,5 +102,10 @@ public class MoneyTransferWorkflow extends Workflow {
       ctx.complete(transferResponse);
       ctx.getLogger().info("--- Workflow finished with result: " + notification.toString() + " ---");
     };
+  }
+
+  private void saveTransferState(TransferResponse transferResponse) {
+    logger.info(transferResponse.getMessage());
+    daprClient.saveState(STATE_STORE, transferResponse.getTransferId(), transferResponse).block();
   }
 }
