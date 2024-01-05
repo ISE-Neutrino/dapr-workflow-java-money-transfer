@@ -19,32 +19,44 @@ endif
 help: ## 💬 This help message :)
 	@grep -E '[a-zA-Z_-]+:.*?## .*$$' $(firstword $(MAKEFILE_LIST)) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
 
-build: ## 🧹 Build application
+####### LOCAL #############
+start-local: ## 🧹 Setup local Kind Cluster
 	@echo -e "\e[34m$@\e[0m" || true
-	@mvn install -Dmaven.test.skip=true
+	@./scripts/start-local-env.sh
 
-clean: ## 🧹 Clean compilation files
+deploy-local: ## 🚀 Deploy application resources locally
 	@echo -e "\e[34m$@\e[0m" || true
-	@mvn clean
+	@./scripts/deploy-services-local.sh
+	@echo -e "\e[34mYOU WILL NEED TO START A NEW TERMINAL AND RUN  make test\e[0m" || true
 
-start-client:  ## 🚀 Start client
+run-local: clean start-local deploy-local ## 💿 Run app locally
+
+port-forward-local: ## ⏩ Forward the local port
 	@echo -e "\e[34m$@\e[0m" || true
-	@dapr run --app-id demoworkflowclient --resources-path ./src/components --dapr-grpc-port 50001 -- java -jar target/dapr-workflow-java-money-transfer-0.0.1-SNAPSHOT.jar com.example.daprworkflowjavamoneytransfer.DaprWorkflowJavaMoneyTransferApplication
+	@kubectl port-forward service/public-api-service 8080:80 --pod-running-timeout=3m0s
 
-run: clean build start-client ## 💿 Run app locally
-	
 dapr-dashboard: ## 🔬 Open the Dapr Dashboard
 	@echo -e "\e[34m$@\e[0m" || true
-	@dapr dashboard -p 9000
+	@dapr dashboard -k -p 9000
 
-init-dapr: ## 🧹 Initialize Dapr
+dapr-components: ## 🏗️  List the Dapr Components
 	@echo -e "\e[34m$@\e[0m" || true
-	@dapr init
+	@dapr components -k
 
-stop-dapr: ## 🧹 Uninstall Dapr
-	@echo -e "\e[34m$@\e[0m" || true
-	@dapr uninstall
-
-test: ## 🧪 Run tests
+test-local: ## 🧪 Run tests, used for local development
 	@echo -e "\e[34m$@\e[0m" || true
 	@./scripts/test.sh
+
+test-e2e: ## 🧪 Run end to end tests
+	@echo -e "\e[34m$@\e[0m" || true
+	@cd test/e2e-test && ./gradlew run
+
+####### AZURE #############
+test-azure: ## 🧪 Run tests in Azure
+	@echo -e "\e[34m$@\e[0m" || true
+	@./scripts/test.sh --azure
+
+clean: ## 🧹 Clean up local files
+	@echo -e "\e[34m$@\e[0m" || true
+	@kind delete cluster --name azd-aks
+	@docker rm kind-registry -f
