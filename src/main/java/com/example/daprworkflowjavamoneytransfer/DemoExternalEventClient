@@ -16,7 +16,6 @@ public class DemoExternalEventClient {
       System.out.printf("Started a new external-event workflow with instance ID: %s%n", instanceId);
 
       client.raiseEvent(instanceId, "Approval", true);
-      //client.raiseEvent(instanceId, "Approval", false);
 
       client.waitForInstanceCompletion(instanceId, null, true);
       System.out.printf("workflow instance with ID: %s completed.", instanceId);

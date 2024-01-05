@@ -23,7 +23,7 @@ acc1=$(curl -X POST -s\
   -H 'Content-Type: application/json' \
   -d '{
     "owner": "A",
-    "amount": 100
+    "amount": 1000
 }' | jq)
 
 acc2=$(curl -X POST -s\
@@ -31,7 +31,7 @@ acc2=$(curl -X POST -s\
   -H 'Content-Type: application/json' \
   -d '{
     "owner": "B",
-    "amount": 100
+    "amount": 1000
 }' | jq)
 
 
@@ -53,7 +53,7 @@ transfer=$(curl -X POST -s\
   -d '{
     "sender": "A",
     "receiver": "B",
-    "amount": 23
+    "amount": 123
 }' | jq)
 
 # echo $transfer | jq

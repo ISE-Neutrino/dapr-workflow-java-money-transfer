@@ -29,7 +29,7 @@ clean: ## 🧹 Clean compilation files
 
 start-client:  ## 🚀 Start client
 	@echo -e "\e[34m$@\e[0m" || true
-	@dapr run --app-id demoworkflowclient --resources-path ./src/components --dapr-grpc-port 50001 -- java -jar target/dapr-workflow-java-money-transfer-0.0.1-SNAPSHOT.jar com.example.daprworkflowjavamoneytransfer.DaprWorkflowJavaMoneyTransferApplication
+	@dapr run --app-id demoworkflowclient --resources-path ./src/deploy --dapr-http-port 3500 --dapr-grpc-port 50001 -- java -jar target/dapr-workflow-java-money-transfer-0.0.1-SNAPSHOT.jar com.example.daprworkflowjavamoneytransfer.DaprWorkflowJavaMoneyTransferApplication
 
 run: clean build start-client ## 💿 Run app locally
 	

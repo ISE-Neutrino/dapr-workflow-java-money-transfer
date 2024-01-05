@@ -2,6 +2,8 @@ package com.example.daprworkflowjavamoneytransfer;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
+import org.springframework.boot.ApplicationRunner;
 
 import io.dapr.workflows.runtime.WorkflowRuntime;
 import io.dapr.workflows.runtime.WorkflowRuntimeBuilder;
@@ -19,29 +21,29 @@ public class DaprWorkflowJavaMoneyTransferApplication {
 
 	public static void main(String[] args) {
 		SpringApplication.run(DaprWorkflowJavaMoneyTransferApplication.class, args);
-
-		startWorkflowWorkers();
 	}
 
-	public static void startWorkflowWorkers() {
-		// Register Workflows
-		WorkflowRuntimeBuilder builder = new WorkflowRuntimeBuilder();
-		builder.registerWorkflow(MoneyTransferWorkflow.class);
-		builder.registerWorkflow(CreateAccountWorkflow.class);
+    @Bean
+    ApplicationRunner applicationRunner() {
+        return args -> {
+            WorkflowRuntimeBuilder builder = new WorkflowRuntimeBuilder();
+            builder.registerWorkflow(MoneyTransferWorkflow.class);
+            builder.registerWorkflow(CreateAccountWorkflow.class);
 
-		// Register workflow activities, visible to all workflows
-		builder.registerActivity(Approver1Activity.class);
-		builder.registerActivity(Approver2Activity.class);
-		builder.registerActivity(CreateAccountActivity.class);
-		builder.registerActivity(FraudDetectionActivity.class);
-		builder.registerActivity(NotifyActivity.class);
-		builder.registerActivity(RequestAccountApprovalActivity.class);
-		builder.registerActivity(TransferMoneyActivity.class);
+            // Register workflow activities, visible to all workflows
+            builder.registerActivity(Approver1Activity.class);
+            builder.registerActivity(Approver2Activity.class);
+            builder.registerActivity(CreateAccountActivity.class);
+            builder.registerActivity(FraudDetectionActivity.class);
+            builder.registerActivity(NotifyActivity.class);
+            builder.registerActivity(RequestAccountApprovalActivity.class);
+            builder.registerActivity(TransferMoneyActivity.class);
 
-		// Build and then start the workflow runtime pulling and executing tasks
-		try (WorkflowRuntime runtime = builder.build()) {
-			System.out.println("--- Start workflow runtime ---");
-			runtime.start();
-		}
-	}
+            // Build and then start the workflow runtime pulling and executing tasks
+            try (WorkflowRuntime runtime = builder.build()) {
+                System.out.println("--- Start workflow runtime ---");
+                runtime.start();
+            }
+        };
+    }
 }

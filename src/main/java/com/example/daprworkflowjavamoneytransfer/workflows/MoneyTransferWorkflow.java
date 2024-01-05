@@ -25,10 +25,6 @@ public class MoneyTransferWorkflow extends Workflow {
   private static Logger logger = LoggerFactory.getLogger(MoneyTransferWorkflow.class);
   private DaprClient daprClient;
 
-  public MoneyTransferWorkflow() {
-    this.daprClient = new DaprClientBuilder().build();
-  }
-
   @Override
   public WorkflowStub create() {
     return ctx -> {
@@ -59,7 +55,9 @@ public class MoneyTransferWorkflow extends Workflow {
       if (transferRequest.getAmount() > 100) {
         ctx.getLogger().info("Waiting for approval...");
         try {
-          Boolean approved = ctx.waitForExternalEvent("Approval", Duration.ofMinutes(1), boolean.class).await();
+          Boolean approved = ctx.waitForExternalEvent("Approval", 
+                            Duration.ofMinutes(10), boolean.class).await();
+                            
           if (!approved) {
             ctx.getLogger().info("approval denied - send a notification");
             notification.setMessage("Transfer was not approved from all actors.");
