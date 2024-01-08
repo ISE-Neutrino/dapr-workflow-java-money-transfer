@@ -29,7 +29,7 @@ clean: ## 🧹 Clean compilation files
 
 start-client:  ## 🚀 Start client
 	@echo -e "\e[34m$@\e[0m" || true
-	@dapr run --app-id demoworkflowclient --resources-path ./src/components --dapr-grpc-port 50001 -- java -jar target/dapr-workflow-java-money-transfer-0.0.1-SNAPSHOT.jar com.example.daprworkflowjavamoneytransfer.DaprWorkflowJavaMoneyTransferApplication
+	@dapr run --app-id money-transfer-service --resources-path ./src/components -- java -jar target/money-transfer-service.jar
 
 run: clean build start-client ## 💿 Run app locally
 	
@@ -48,3 +48,23 @@ stop-dapr: ## 🧹 Uninstall Dapr
 test: ## 🧪 Run tests
 	@echo -e "\e[34m$@\e[0m" || true
 	@./scripts/test.sh
+
+###
+
+start-local: ## 🧹 Setup local Kind Cluster
+	@echo -e "\e[34m$@\e[0m" || true
+	@./scripts/start-local-env.sh
+
+deploy-local: ## 🚀 Deploy application resources locally
+	@echo -e "\e[34m$@\e[0m" || true
+	@./scripts/deploy-services-local.sh
+	@echo -e "\e[34mYOU WILL NEED TO START A NEW TERMINAL AND RUN  make test\e[0m" || true
+
+kind-clean: ## 🧹 Clean up local files
+	@echo -e "\e[34m$@\e[0m" || true
+	@kind delete cluster --name azd-aks
+	@docker rm kind-registry -f
+
+port-forward-local: ## ⏩ Forward the local port
+	@echo -e "\e[34m$@\e[0m" || true
+	@kubectl port-forward service/money-transfer-service 80:80 --pod-running-timeout=3m0s

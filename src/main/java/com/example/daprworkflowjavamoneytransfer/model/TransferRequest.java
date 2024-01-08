@@ -16,7 +16,7 @@ public class TransferRequest {
     private String transferId;
 
     public String toString() {
-        return "Sender: " + sender + ", Receiver: " + receiver + ", Amount: " + amount;
+        return "Sender: " + sender + ", Receiver: " + receiver + ", Amount: " + amount + ", TransferId: " + transferId;
     }
 
     public static String generateId() {
