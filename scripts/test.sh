@@ -3,7 +3,6 @@
 set -o errexit
 
 FRONT_END_IP=localhost:8080
-FRONT_END_IP2=localhost:8081
 
 usage() {
     echo ""

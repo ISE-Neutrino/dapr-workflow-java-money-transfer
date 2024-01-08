@@ -32,6 +32,11 @@ helm install redis -n default --set architecture=standalone bitnami/redis
 printf '\n📀 Init Dapr\n\n'
 dapr init --kubernetes --wait --timeout 600
 
+printf '\n📀 Deploy Dapr Dashboard\n\n'
+helm repo add dapr https://dapr.github.io/helm-charts/
+helm repo update
+helm install dapr-dashboard dapr/dapr-dashboard
+
 printf '\n📀 Deploy pub-sub broker component backed by Redis\n\n'
 kubectl apply -f ./local/components/pubsub.yaml --wait=true
 
