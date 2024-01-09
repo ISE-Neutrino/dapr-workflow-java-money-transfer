@@ -40,7 +40,6 @@ public class AccountController {
         this.daprClient = new DaprClientBuilder().build();
     }
 
-    // @Topic(name = ACCOUNT_TOPIC, pubsubName = PUBSUB_NAME)
     @PostMapping(path = "/accounts", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<CreateAccountResponse> createAccount(@RequestBody CreateAccountRequest request) {
         try (DaprWorkflowClient client = new DaprWorkflowClient()) {
@@ -57,32 +56,5 @@ public class AccountController {
         } catch (TimeoutException | InterruptedException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    //TODO: REMOVE getAccount endpoint
-    @GetMapping(path = "/accounts/{owner}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Mono<ResponseEntity> getAccount(@PathVariable String owner) {
-
-        return Mono.fromSupplier(() -> {
-            try {
-                logger.info("Get Account Request Received");
-
-                var accountAmount = daprClient.getState(STATE_STORE, owner, Double.class).block();
-                if (accountAmount.getValue() == null) {
-                    logger.error("Account {} does not exist.", owner);
-                    return ResponseEntity.badRequest().body(String.format("Account %s does not exist.", owner));
-                }
-
-                return ResponseEntity.ok(AccountResponse.builder()
-                        .owner(owner)
-                        .amount(accountAmount.getValue())
-                        .build());
-
-            } catch (Exception e) {
-
-                logger.error("Error while getting account request: " + e.getMessage());
-                return ResponseEntity.badRequest().body(e.getMessage());
-            }
-        });
     }
 }

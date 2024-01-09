@@ -56,29 +56,4 @@ public class TransferController {
             throw new RuntimeException(e);
         }
     }
-
-    //TODO: REMOVE getTransfer endpoint
-    @GetMapping(path = "/transfers/{transferId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Mono<ResponseEntity> getTransfer(@PathVariable String transferId) {
-
-        return Mono.fromSupplier(() -> {
-            try {
-                logger.info("Get Transfer State Received: transferId: {}", transferId);
-
-                var transferResponse = daprClient.getState(STATE_STORE, transferId, TransferResponse.class).block();
-                if (transferResponse.getValue() == null) {
-                    logger.error("Transfer Request for id {} does not exist.", transferId);
-                    return ResponseEntity.badRequest()
-                            .body(String.format("Transfer Request for id %s does not exist.", transferId));
-                }
-
-                return ResponseEntity.ok(transferResponse.getValue());
-
-            } catch (Exception e) {
-
-                logger.error("Error while getting account request: " + e.getMessage());
-                return ResponseEntity.badRequest().body(e.getMessage());
-            }
-        });
-    }
 }

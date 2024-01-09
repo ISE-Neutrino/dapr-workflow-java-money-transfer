@@ -6,8 +6,6 @@ import io.dapr.client.DaprClient;
 import io.dapr.client.DaprClientBuilder;
 import io.dapr.client.domain.HttpExtension;
 import io.dapr.client.domain.InvokeMethodRequest;
-import io.dapr.workflows.client.DaprWorkflowClient;
-import io.dapr.workflows.client.WorkflowInstanceStatus;
 import reactor.core.publisher.Mono;
 
 import java.util.concurrent.TimeoutException;
@@ -29,7 +27,6 @@ public class AppController {
 
     private static final String STATE_STORE = "statestore";
 
-    private static final String PUBSUB_NAME = "money-transfer-pubsub";
     private static final String ACCOUNT_TOPIC = "accounts";
     private static final String TRANSFER_TOPIC = "transfers";
 
@@ -45,31 +42,18 @@ public class AppController {
     public ResponseEntity<CreateAccountResponse> createAccount(@RequestBody CreateAccountRequest request) {
         try {
             logger.info("Create Account Request Received");
-            // // via pubsub event publish
-            // daprClient.publishEvent(PUBSUB_NAME, ACCOUNT_TOPIC, request).block();
 
-            // // via daprClient invokeMethod
-            // InvokeMethodRequest invokeMethodRequest = new
-            // InvokeMethodRequest("account-service", "accounts");
-            // invokeMethodRequest.setBody(request);
-
+            // calling Account-Service via daprClient invokeMethod
             CreateAccountResponse response = daprClient.invokeMethod(
-            "account-service",
-            "accounts",
-            request,
-            HttpExtension.POST,
-            CreateAccountResponse.class).block();
+                    "account-service",
+                    "accounts",
+                    request,
+                    HttpExtension.POST,
+                    CreateAccountResponse.class).block();
 
             System.out.printf("workflow completed with result: %s%n", response);
 
             return ResponseEntity.ok(response);
-
-            // return ResponseEntity.ok(CreateAccountResponse.builder()
-            //         .account(AccountResponse.builder()
-            //                 .owner(request.getOwner())
-            //                 .amount(request.getAmount()))
-            //         .message("Account created successfully")
-            //         .build());
 
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -107,19 +91,11 @@ public class AppController {
 
         try {
             logger.info("Transfer Request Received");
-            // // via pubsub event publish
-            // daprClient.publishEvent(PUBSUB_NAME, ACCOUNT_TOPIC, request).block();
 
-            // via daprClient invokeMethod
-            // InvokeMethodRequest invokeMethodRequest = new
-            // InvokeMethodRequest("transfer-service", "transfers",
-            // request);
-            // daprClient.invokeMethod(invokeMethodRequest,
-            // CreateAccountResponse.class).block();
-
+            // call Transfer-Service via daprClient invokeMethod
             TransferResponse response = daprClient.invokeMethod(
                     "transfer-service",
-                    "createTransfer",
+                    "transfers",
                     request,
                     HttpExtension.POST,
                     TransferResponse.class).block();
