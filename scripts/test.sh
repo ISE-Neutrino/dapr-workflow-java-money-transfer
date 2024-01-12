@@ -2,19 +2,16 @@
 
 set -o errexit
 
-FRONT_END_IP=localhost:8080
+# FRONT_END_IP=localhost:8080
+printf "\n🧪 Getting front end IP from cluster configuration\n\n"
+FRONT_END_IP=$(kubectl get service public-api-service -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
 
-usage() {
-    echo ""
-    echo "usage: ./test.sh [--azure]"
-    echo ""
-    echo ""
-}
+if [ -z "$FRONT_END_IP" ]; then
+  echo "⚠  Could not get front end IP - Assigning local IP"
+  FRONT_END_IP=localhost:8080
+fi
 
-failed() {
-    printf "💥 Script failed: %s\n\n" "$1"
-    exit 1
-}
+echo "Front end IP: $FRONT_END_IP"
 
 # Create aacounts
 echo -e "\n🧪 Creating accounts"

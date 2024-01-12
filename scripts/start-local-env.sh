@@ -1,5 +1,4 @@
-
-#!/bin/sh
+#!/bin/bash
 set -o errexit
 
 printf "\n🤖 Starting local environment...\n\n"
@@ -13,8 +12,8 @@ if [ "$(docker inspect -f '{{.State.Running}}' "${reg_name}" 2>/dev/null || true
     registry:2
 fi
 
-printf '\n📀 Create kind cluster called: azd-aks\n\n'
-kind create cluster --name azd-aks --config ./local/kind-cluster-config.yaml
+printf '\n📀 Create kind cluster called: azd-aks-workflow\n\n'
+kind create cluster --name azd-aks-workflow --config ./local/kind-cluster-config.yaml
 
 printf '\n📀 Connect the registry to the cluster network if not already connected\n'
 if [ "$(docker inspect -f='{{json .NetworkSettings.Networks.kind}}' "${reg_name}")" = 'null' ]; then
@@ -36,9 +35,6 @@ printf '\n📀 Deploy Dapr Dashboard\n\n'
 helm repo add dapr https://dapr.github.io/helm-charts/
 helm repo update
 helm install dapr-dashboard dapr/dapr-dashboard
-
-# printf '\n📀 Deploy pub-sub broker component backed by Redis\n\n'
-# kubectl apply -f ./local/components/pubsub.yaml --wait=true
 
 printf '\n📀 Deploy state store component backed Redis\n\n'
 kubectl apply -f ./local/components/state.yaml --wait=true

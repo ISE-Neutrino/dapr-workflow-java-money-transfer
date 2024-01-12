@@ -24,12 +24,21 @@ start-local: ## 🧹 Setup local Kind Cluster
 	@echo -e "\e[34m$@\e[0m" || true
 	@./scripts/start-local-env.sh
 
+start-aks: ## 🧹 Setup Azure K8s Cluster
+	@echo -e "\e[34m$@\e[0m" || true
+	@azd provision --environment azd-aks-workflow
+
 deploy-local: ## 🚀 Deploy application resources locally
 	@echo -e "\e[34m$@\e[0m" || true
-	@./scripts/deploy-services-local.sh
+	@./scripts/deploy-services.sh --local
 	@echo -e "\e[34mYOU WILL NEED TO RUN \"make port-foward-local\" TO BE ABLE TO RUN TESTS\e[0m" || true
 
-run-local: clean start-local deploy-local ## 💿 Run app locally
+deploy-aks: ## 🚀 Deploy application resources in Azure
+	@echo -e "\e[34m$@\e[0m" || true
+	@./scripts/deploy-services.sh --azure
+
+
+run-local: clean-local start-local deploy-local ## 💿 Run app locally
 
 port-forward-local: ## ⏩ Forward the local port
 	@echo -e "\e[34m$@\e[0m" || true
@@ -44,16 +53,16 @@ dapr-components: ## 🏗️  List the Dapr Components
 	@echo -e "\e[34m$@\e[0m" || true
 	@dapr components -k
 
-test-local: ## 🧪 Run tests, used for local development
+test: ## 🧪 Run tests, used for both local and aks development
 	@echo -e "\e[34m$@\e[0m" || true
 	@./scripts/test.sh
 
-####### AZURE #############
-test-azure: ## 🧪 Run tests in Azure
+####### CLEAN #############
+clean-local: ## 🧹 Clean up local files
 	@echo -e "\e[34m$@\e[0m" || true
-	@./scripts/test.sh --azure
-
-clean: ## 🧹 Clean up local files
-	@echo -e "\e[34m$@\e[0m" || true
-	@kind delete cluster --name azd-aks
+	@kind delete cluster --name azd-aks-workflow
 	@docker rm kind-registry -f
+
+clean-aks: ## 🧹 Clean up Azure AKS resources and deployments
+	@echo -e "\e[34m$@\e[0m" || true
+	@azd down --purge

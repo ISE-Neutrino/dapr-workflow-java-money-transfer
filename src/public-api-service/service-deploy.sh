@@ -1,10 +1,42 @@
-#!/bin/sh
+#!/bin/bash
 
 set -o errexit
 
+usage() {
+    echo "This script is not meant to be called directly. It's part of a flow"
+    echo "and should be called from \"scripts/deploy-services.sh\""
+    echo ""
+    exit 1
+}
+
+failed() {
+    printf "💥 Script failed: %s\n\n" "$1"
+    usage
+    exit 1
+}
+
+if [ $# -ne 1 ]; then
+    failed "missing or wrong parameters"
+    exit 1
+elif [ "${1}" == "--azure" ]; then
+    printf "\n🤖  Starting Azure deployments...\n\n"
+    # get values from azd environment
+    source <(azd env get-values)
+    az acr login --name "${AZURE_CONTAINER_REGISTRY_NAME}"
+    containerRegistry="${AZURE_CONTAINER_REGISTRY_NAME}.azurecr.io"
+
+elif [ "${1}" == "--local" ]; then
+    printf "\n🤖  Starting local deployments...\n\n"
+    containerRegistry="localhost:5001"
+else
+    failed "invalid parameter: ${1}"
+    exit 1
+fi
+
 serviceName="public-api-service"
 version=$(date +%Y.%m.%d.%H.%M.%S)
-printf "\n🛖  Releasing version: %s\n\n" "${version}"
+imageName="${containerRegistry}/${serviceName}":"${version}"
+printf "\n🛖  Releasing version: %s\n\n" "${imageName}"
 
 # check if service deployment exists on cluster, deleting if it does
 if [ $(kubectl get deployments | grep -c "^${serviceName}") -eq "1" ]; then
@@ -13,10 +45,10 @@ if [ $(kubectl get deployments | grep -c "^${serviceName}") -eq "1" ]; then
 fi
 
 printf "\n🏗️  Building docker image\n\n"
-docker build -t localhost:5001/"${serviceName}":"${version}" .
+docker build -t ${imageName} .
 
-printf "\n🚚  Pushing docker image to local registry\n\n"
-docker push localhost:5001/"${serviceName}":"${version}"
+printf "\n🚚  Pushing docker image to container registry\n\n"
+docker push ${imageName}
 
 printf "\n🚀  Deploying to cluster\n\n"
 cat <<EOF | kubectl apply -f -
@@ -59,7 +91,7 @@ spec:
     spec:
       containers:
       - name: node
-        image: localhost:5001/${serviceName}:${version}
+        image: ${imageName}
         env:
         - name: APP_PORT
           value: "8080"
@@ -68,6 +100,13 @@ spec:
         ports:
         - containerPort: 80
         imagePullPolicy: Always
+        resources:
+            limits:
+              cpu: "512m"
+              memory: "512Mi"
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
 EOF
 
 
