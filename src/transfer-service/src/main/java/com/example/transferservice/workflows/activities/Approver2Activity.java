@@ -17,7 +17,7 @@ public class Approver2Activity implements WorkflowActivity {
 
     // Simulate slow processing
     try {
-      Thread.sleep(2 * 1000);
+      Thread.sleep(5 * 1000);
     } catch (InterruptedException e) {
     }
 
