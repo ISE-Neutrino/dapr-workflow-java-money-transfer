@@ -42,17 +42,13 @@ run-local: clean-local start-local deploy-local ## 💿 Run app locally
 
 port-forward-local: ## ⏩ Forward the local port
 	@echo -e "\e[34m$@\e[0m" || true
-	@echo -e "\e[34mYOU WILL NEED TO START A NEW TERMINAL AND RUN  \"make test-local\"\e[0m" || true
+	@echo -e "\e[34mYOU WILL NEED TO START A NEW TERMINAL AND RUN  \"make test\"\e[0m" || true
 	@kubectl port-forward service/public-api-service 8080:80 --pod-running-timeout=3m0s
 
 dapr-dashboard: ## 🔬 Open the Dapr Dashboard
 	@echo -e "\e[34m$@\e[0m" || true
 	@dapr dashboard -k -p 9000 &
-
-dapr-components: ## 🏗️  List the Dapr Components
-	@echo -e "\e[34m$@\e[0m" || true
-	@dapr components -k
-
+	
 test: ## 🧪 Run tests, used for both local and aks development
 	@echo -e "\e[34m$@\e[0m" || true
 	@./scripts/test.sh

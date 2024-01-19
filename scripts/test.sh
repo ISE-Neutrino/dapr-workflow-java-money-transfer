@@ -64,6 +64,7 @@ curl -X GET -s\
   http://${FRONT_END_IP}/transfers/${transferId} \
   -H 'Content-Type: application/json' | jq
 
+echo -e "\n🧪 New account balances"
 curl -X GET -s\
     http://${FRONT_END_IP}/accounts/A \
     -H 'Content-Type: application/json' | jq
