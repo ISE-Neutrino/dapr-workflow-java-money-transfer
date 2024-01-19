@@ -19,32 +19,50 @@ endif
 help: ## 💬 This help message :)
 	@grep -E '[a-zA-Z_-]+:.*?## .*$$' $(firstword $(MAKEFILE_LIST)) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
 
-build: ## 🧹 Build application
+####### LOCAL #############
+start-local: ## 🧹 Setup local Kind Cluster
 	@echo -e "\e[34m$@\e[0m" || true
-	@mvn install -Dmaven.test.skip=true
+	@./scripts/start-local-env.sh
 
-clean: ## 🧹 Clean compilation files
+start-aks: ## 🧹 Setup Azure K8s Cluster
 	@echo -e "\e[34m$@\e[0m" || true
-	@mvn clean
+	@azd provision --environment azd-aks-workflow
 
-start-client:  ## 🚀 Start client
+deploy-local: ## 🚀 Deploy application resources locally
 	@echo -e "\e[34m$@\e[0m" || true
-	@dapr run --app-id demoworkflowclient --resources-path ./src/components --dapr-grpc-port 50001 -- java -jar target/dapr-workflow-java-money-transfer-0.0.1-SNAPSHOT.jar com.example.daprworkflowjavamoneytransfer.DaprWorkflowJavaMoneyTransferApplication
+	@./scripts/deploy-services.sh --local
+	@echo -e "\e[34mYOU WILL NEED TO RUN \"make port-foward-local\" TO BE ABLE TO RUN TESTS\e[0m" || true
 
-run: clean build start-client ## 💿 Run app locally
-	
+deploy-aks: ## 🚀 Deploy application resources in Azure
+	@echo -e "\e[34m$@\e[0m" || true
+	@./scripts/deploy-services.sh --azure
+
+
+run-local: clean-local start-local deploy-local ## 💿 Run app locally
+
+port-forward-local: ## ⏩ Forward the local port
+	@echo -e "\e[34m$@\e[0m" || true
+	@echo -e "\e[34mYOU WILL NEED TO START A NEW TERMINAL AND RUN  \"make test-local\"\e[0m" || true
+	@kubectl port-forward service/public-api-service 8080:80 --pod-running-timeout=3m0s
+
 dapr-dashboard: ## 🔬 Open the Dapr Dashboard
 	@echo -e "\e[34m$@\e[0m" || true
-	@dapr dashboard -p 9000
+	@dapr dashboard -k -p 9000 &
 
-init-dapr: ## 🧹 Initialize Dapr
+dapr-components: ## 🏗️  List the Dapr Components
 	@echo -e "\e[34m$@\e[0m" || true
-	@dapr init
+	@dapr components -k
 
-stop-dapr: ## 🧹 Uninstall Dapr
-	@echo -e "\e[34m$@\e[0m" || true
-	@dapr uninstall
-
-test: ## 🧪 Run tests
+test: ## 🧪 Run tests, used for both local and aks development
 	@echo -e "\e[34m$@\e[0m" || true
 	@./scripts/test.sh
+
+####### CLEAN #############
+clean-local: ## 🧹 Clean up local files
+	@echo -e "\e[34m$@\e[0m" || true
+	@kind delete cluster --name azd-aks-workflow
+	@docker rm kind-registry -f
+
+clean-aks: ## 🧹 Clean up Azure AKS resources and deployments
+	@echo -e "\e[34m$@\e[0m" || true
+	@azd down --purge
