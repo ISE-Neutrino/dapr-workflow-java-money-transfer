@@ -38,7 +38,7 @@ The project contains the following services:
 
 ### How it works?
 
-1. Public API endpoint receives new requests for accounts or transfers. 
+1. Public API endpoint receives new requests for account creation or money transfers. 
 2. Public API invokes the correct service via DAPR Sidecars, depending on the request (account creation or money transfer).
     2.1. Account Creation Workflow Starts
         2.1.1. Multiple tasks are performed via Workflow Activities called by the DAPR client such as Notification, Approval, Creation.
