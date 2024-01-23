@@ -3,7 +3,7 @@ Initial playgroud to work with DAPR workflows in Java in k8s.
 
 This sample depicts a simple money transfer application built on Java Spring Boot, leveraging Dapr Workflows for Java and  Dapr Service Invocation feature to manage account creation and money transfers in a k8s. The project focuses on simplicity, reliability, and extensibility, utilizing Dapr for state management and implementing some of [the workflow patterns](https://docs.dapr.io/developing-applications/building-blocks/workflow/workflow-patterns/) described in Dapr documentation.
 
-It makes use of out-of-the-box capabilities of DAPR to manage workflows, handling requirements such as retries and durability without the need of extra features' implementation. 
+It uses Dapr Workflows for Java for handling non-functional requirements such as retries and durability out of box.
 
 ## Features
 
