@@ -44,7 +44,7 @@ The project contains the following services:
         2.1.1. Multiple tasks are performed via Workflow Activities called by the Dapr client such as Notification, Approval, Creation.
         2.1.2. A validation if the amount is valid for creating an account (greater than zero) is performed.
     2.2. Transfer workflow starts
-        2.2.1. Multiple tasks are performed via Workflow Activities called by the DAPR client such as Notification, Fraud Detection, Transfer.
+        2.2.1. Multiple tasks are performed via Workflow Activities called by the Dapr client such as Notification, Fraud Detection, Transfer.
         2.2.2. It checks if `Sender` and `Receiver` exists, checks if `Sender` has enough funds and performs the actual transfer.
 3. Public API can be used to check the account balances or the status of a transfer request.
 
