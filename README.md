@@ -41,7 +41,7 @@ The project contains the following services:
 1. Public API endpoint receives new requests for account creation or money transfers. 
 2. Public API invokes corresponding service depending on account creation or money transfer request using Service Invocation pattern and starts corresponding workflow in that service.
     2.1. Account Creation Workflow Starts
-        2.1.1. Multiple tasks are performed via Workflow Activities called by the DAPR client such as Notification, Approval, Creation.
+        2.1.1. Multiple tasks are performed via Workflow Activities called by the Dapr client such as Notification, Approval, Creation.
         2.1.2. A validation if the amount is valid for creating an account (greater than zero) is performed.
     2.2. Transfer workflow starts
         2.2.1. Multiple tasks are performed via Workflow Activities called by the DAPR client such as Notification, Fraud Detection, Transfer.
