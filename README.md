@@ -1,5 +1,5 @@
 # Dapr Workflows for Java Sample
-Initial playgroud to work with DAPR workflows in Java in a distributed environment
+Initial playgroud to work with DAPR workflows in Java in k8s.
 
 This sample depicts a simple money transfer application built on Java Spring Boot, leveraging DAPR workflows, service invocation, and sidecar patterns to manage the creation of accounts facilitate money transfers between accounts running in a Kubernetes cluster. The project focuses on simplicity, reliability, and extensibility, utilizing DAPR for state management and implementing some of the workflow patterns described in DAPR Documentation in a distributed application.
 
